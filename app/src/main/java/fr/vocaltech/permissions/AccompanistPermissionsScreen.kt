@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -22,7 +24,7 @@ fun AccompanistPermissionsScreen() {
         Modifier
             .fillMaxSize()
             .padding(30.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.Start
     ) {
         val context = LocalContext.current
 
@@ -31,7 +33,13 @@ fun AccompanistPermissionsScreen() {
         CheckAndRequestCameraPermission(context, cameraPermissionState)
 
         // Location permission
-        // TODO
+        val locationPermissionsState = rememberMultiplePermissionsState(
+            listOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            )
+        )
+        CheckAndRequestLocationPermissions(context, locationPermissionsState)
     }
 }
 
@@ -58,11 +66,43 @@ fun CheckAndRequestCameraPermission(context: Context, cameraPermissionState: Per
             Button(onClick = { cameraPermissionState.launchPermissionRequest() }) {
                 Text("Request permission")
             }
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun CheckAndRequestLocationPermissions() {
+fun CheckAndRequestLocationPermissions(context: Context, locationPermissionsState: MultiplePermissionsState) {
+    if (locationPermissionsState.allPermissionsGranted) {
+        Toast.makeText(context, "Location is granted !", Toast.LENGTH_SHORT).show()
+    } else {
+        Column {
+            val allPermissionsRevoked =
+                locationPermissionsState.permissions.size == locationPermissionsState.revokedPermissions.size
 
+            val textToShow = if (!allPermissionsRevoked) {
+                // If not all the permissions are revoked, it's because the user
+                // accepted the COARSE permission but not the FINE one
+                "Need to grant the FINE location !"
+            } else if (locationPermissionsState.shouldShowRationale) {
+                // Both location permissions have been denied
+                "Please, grant us FINE location"
+            } else {
+                // First time, the user sees this feature or the user doesn't want to be asked again
+                "This feature requires location permission"
+            }
+
+            val buttonText = if (!allPermissionsRevoked) {
+                "Allow Precise location"
+            } else {
+                "Request permissions"
+            }
+
+            Text(text = textToShow)
+            Button(onClick = { locationPermissionsState.launchMultiplePermissionRequest() }) {
+                Text(buttonText)
+            }
+        }
+    }
 }
