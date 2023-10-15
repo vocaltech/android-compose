@@ -1,4 +1,4 @@
 ## Jetpack Compose codelabs
 
-> Permissions 
-    - using Accompanist library
+<b>Permissions</b>
+- using Accompanist library
